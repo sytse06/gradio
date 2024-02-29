@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "gradio-interface"
+version = "0.1.0"
+description = "Gradio interface experiments"
+authors = ["sytse06 <sytse@svdschaaf.nl>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "3.12"
+gradio = "^4.19.1"
+langchain = "^0.1.8"
+openai = "^1.12.0"
+openai-async = "^0.0.3"
+torch = "^2.2.1"
+transformers = "^4.38.1"
+beautifulsoup4 = "^4.12.3"
+tiktoken = "^0.6.0"
+chromadb = "^0.4.24"
+sentence-transformers = "^2.5.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

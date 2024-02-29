@@ -1,0 +1,10 @@
+https://www.gradio.app/guides/creating-a-chatbot-fast
+https://www.gradio.app/guides/quickstart
+https://www.gradio.app/docs/chatinterface
+
+Can you give me boilerplate code to create a streaming app using Ollama LLM?
+
+
+# IDs
+ID = str
+IDs = List[ID]
