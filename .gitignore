@@ -3,3 +3,8 @@
 
 # VS Code workspace settings
 .code-workspace
+gradio.code-workspace
+
+# Directories to be excluded
+.DS_Store
+flagged/
