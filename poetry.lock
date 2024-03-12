@@ -4677,6 +4677,19 @@ files = [
 ]
 
 [[package]]
+name = "whisper"
+version = "1.1.10"
+description = "Fixed size round-robin style database"
+optional = false
+python-versions = "*"
+files = [
+    {file = "whisper-1.1.10.tar.gz", hash = "sha256:435b4fb843c4c752719bdf0511a652d5be710e9bb35ad9ebe3b133268ee31c44"},
+]
+
+[package.dependencies]
+six = "*"
+
+[[package]]
 name = "wrapt"
 version = "1.16.0"
 description = "Module for decorators, wrappers and monkey patching."
@@ -4876,4 +4889,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "3.12"
-content-hash = "e5085ae5eb5cbd3be24ba2090f5ec0594f049831e032e4420fcf5c12fd5be68f"
+content-hash = "1d37372ef399818d0fe233d4d47b08a442d605be21de06011eabfead45888e1b"

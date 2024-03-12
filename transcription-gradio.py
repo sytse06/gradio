@@ -2,6 +2,8 @@
 import gradio as gr
 from datetime import timedelta
 import numpy as np
+import whisper
+from whisper.utils import get_writer
 from PIL import Image
 import io
 import json
@@ -10,7 +12,7 @@ import os
 # Initialize the Whisper transcription API interface instance
 interface = gr.Interface(f"whisper.SpeechClient", inputs="audio", outputs="text")
 
-# Define the models available for transcription using Gradio
+# Define the models available for transcription
 models = {
     "en-us": {
         "params": "whisper.en-us",
@@ -25,7 +27,7 @@ models = {
 # Define the output formats available for transcription using Gradio
 output_formats = {
     "text/plain": {
-        "description": "This is a plain text representation of the transcribed speech.",
+        "description": "This is a plain text representation of the audio file.",
         "format": "text"
     },
     "application/json": {
