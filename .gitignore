@@ -1,5 +1,11 @@
-# Environment variables
-.env
+# Ignore everything
+*
 
-# VS Code workspace settings
-.code-workspace
+# But don't ignore these files
+!readme.md
+!pyproject.toml
+!poetry.lock
+!.gitignore
+!requirements.txt
+!*.py
+!.env
