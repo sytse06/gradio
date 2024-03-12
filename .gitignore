@@ -1,10 +1,11 @@
-# Environment variables
-.env
+# Ignore everything
+*
 
-# VS Code workspace settings
-.code-workspace
-gradio.code-workspace
-
-# Directories to be excluded
-.DS_Store
-flagged/
+# But don't ignore these files
+!readme.md
+!pyproject.toml
+!poetry.lock
+!.gitignore
+!requirements.txt
+!*.py
+!.env
