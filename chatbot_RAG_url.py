@@ -10,7 +10,8 @@ from langchain.text_splitter import CharacterTextSplitter
 from langchain.memory import ConversationBufferWindowMemory
 from langchain_community.document_loaders import WebBaseLoader 
 from langchain_community.document_loaders import PyPDFLoader
-from llama_index import download_loader
+from llama_index.core import download_loader
+from llama_index.readers.web import SimpleWebPageReader
 from llama_index.core import SimpleDirectoryReader
 
 def process_input(urls, directory_path, question):
@@ -51,7 +52,7 @@ def process_input(urls, question):
     if not fixed_urls_list:
         return "No URLs provided. Please enter valid URLs separated by new lines."
 
-    docs = [WebBaseLoader(url).load() for url in fixed_urls_list]
+    docs = [SimpleWebPageReader(url).load() for url in fixed_urls_list]
     docs_list = [item for sublist in docs for item in sublist]
     if not docs_list:
         return "Failed to load documents from the provided URLs. Please check the URLs and try again."
