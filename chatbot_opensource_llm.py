@@ -14,13 +14,13 @@ os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 llm_ollama = ChatOpenAI(
     openai_api_base="http://localhost:11434",
     openai_api_key="Null",                 
-    model_name="gemma:7b"
+    model_name="Mistral"
 )
 
 llm_lmstudio = ChatOpenAI(
     openai_api_base="http://localhost:4321/v1",
     openai_api_key="Null",                 
-    model_name="Mixtral-7B"
+    model_name="Mistral"
 )
 
 def predict(message, history):
