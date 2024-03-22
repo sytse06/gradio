@@ -2,13 +2,49 @@
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 from llama_index.llms.openai import OpenAI
 from llama_index.core import Settings
+from llama_index.core import Document
 from dotenv import load_dotenv
+import gradio as gr
 
 load_dotenv()
 
-documents = SimpleDirectoryReader("data").load_data()
-print(documents)
-print(documents[0].text)
+def upload_file(files):
+
+    file_paths = [file.name for file in files]
+
+    return file_paths
+
+with gr.Blocks() as demo:
+
+    file_output = gr.File()
+
+    upload_button = gr.UploadButton("Click to Upload a File", file_types=["text"], file_count="single")
+
+    upload_button.upload(upload_file, upload_button, file_output)
+
+def handle_upload(files):
+    processed_files = []  # List to store processed text files
+    
+    if files is not None:
+        for file in files:
+            with open(file.name, 'r') as f:
+                content = f.read()  # Read content of the file
+            
+            # Process content here or pass it directly to Document constructor
+            processed_content = process_content(content)
+            
+            # Create Document object directly from the processed content
+            document = Document(text=processed_content)
+            
+            # Append Document object to the list
+            processed_files.append(document)
+        
+        return "Files uploaded and processed successfully."
+    else:
+        return "No file was uploaded."
+    
+# Create Document objects directly from the processed text files
+documents = [Document(text=content) for content in processed_files]
 
 from llama_index.core.node_parser import SentenceSplitter
 
@@ -59,3 +95,5 @@ prompts_dict = query_engine.get_prompts()
 print(prompts_dict)
 query_engine.query("How long does it take to prepare a pizza")
 
+# Create Gradio interface
+iface = gr.Interface(fn=handle_upload, inputs=gr.inputs.Upload(file_count='multiple'), outputs="text")

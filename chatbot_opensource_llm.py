@@ -10,6 +10,9 @@ with open('/Users/sytsevanderschaaf/Documents/Dev/credentials.json', 'r') as f:
     
 os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 
+ollama = Ollama(base_url='http://localhost:11434',
+model="mistral")
+
 
 llm_ollama = ChatOpenAI(
     openai_api_base="http://localhost:11434",
@@ -22,7 +25,6 @@ llm_lmstudio = ChatOpenAI(
     openai_api_key=None,                 
     model_name="GEITje 7B ultra Mistral"
 )
-
 
 def predict(message, history):
     history_langchain_format = []
