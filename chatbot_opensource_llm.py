@@ -5,7 +5,7 @@ import gradio as gr
 import os
 
 import json
-with open('/Users/sytsevanderschaaf/Documents/Dev/credentials.json', 'r') as f:
+with open('credentials.json', 'r') as f:
     credentials = json.load(f)
     
 os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
@@ -21,7 +21,7 @@ llm_ollama = ChatOpenAI(
 )
 
 llm_lmstudio = ChatOpenAI(
-    openai_api_base="http://localhost:4321/v1",
+    openai_api_base="http://localhost:54321/v1",
     openai_api_key=None,                 
     model_name="GEITje 7B ultra Mistral"
 )
