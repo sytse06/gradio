@@ -3,10 +3,9 @@ from langchain.schema import AIMessage, HumanMessage
 import openai
 import gradio as gr
 import os
-
-import os
 import json
-with open('/Users/sytsevanderschaaf/Documents/Dev/credentials.json', 'r', encoding='utf-8') as f:
+
+with open('credentials.json', 'r', encoding='utf-8') as f:
     credentials = json.load(f)
 os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 
