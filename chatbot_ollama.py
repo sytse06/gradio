@@ -9,6 +9,9 @@ import json
 ollama = Ollama(base_url='http://localhost:11434',
 model="deepseek-coder:6.7b")
 
+def chat(prompt):
+    return ollama([HumanMessage(content=prompt)])[0].content  # get only the first response's content
+
 def predict(message, history):
     history_langchain_format = []
     for human, ai in history:
