@@ -1,8 +1,12 @@
 
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
 from llama_index.llms.openai import OpenAI
-from llama_index.core import Settings
-from llama_index.core import Document
+from llama_index.core import Settings, Document, PromptTemplate
+from llama_index.vector_stores.chroma import ChromaVectorStore
+from llama_index.core import StorageContext
+from llama_index.embeddings.huggingface import HuggingFaceEmbedding
+#from IPython.display import Markdown, display
+import chromadb
 from dotenv import load_dotenv
 import gradio as gr
 
@@ -51,11 +55,6 @@ from llama_index.core.node_parser import SentenceSplitter
 text_splitter = SentenceSplitter(chunk_size=200, chunk_overlap=10)
 nodes = text_splitter.get_nodes_from_documents(documents=documents)
 
-from llama_index.vector_stores.chroma import ChromaVectorStore
-import chromadb
-from llama_index.core import StorageContext
-from llama_index.embeddings.openai import OpenAIEmbedding
-
 chroma_client = chromadb.EphemeralClient()
 chroma_collection = chroma_client.create_collection("tes1233t")
 vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
@@ -74,9 +73,6 @@ retriever.retrieve("How long does it take to prepare a pizza")
 Settings.llm = OpenAI(model="gpt-3.5-turbo")
 
 query_engine.query("How long does it take to prepare a pizza")
-
-from llama_index.core import PromptTemplate
-
 
 new_summary_tmpl_str = (
     "You always say 'Hello my friend' at the beginning of your answer. Below you find data from a database\n"
