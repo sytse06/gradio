@@ -15,8 +15,9 @@ def transcribe(audio):
     print(result["text"])
     return result["text"]
 
-def processAudio(audio1,audio2,choiceTranslate):
-    model = whisper.load_model("base")
+def processAudio(audio1, audio2, model_choice):
+    # Load the Whisper model based on the user's selection from the dropdown
+    model = whisper.load_model(model_choice)
 
     if audio1 is None and audio2 is None:
         return "No audio inputs were provided."
@@ -41,11 +42,11 @@ iface = gr.Interface(
     inputs=[
         gr.Audio(sources=["microphone"], type="filepath", label="Record Audio", show_label=True),
         gr.Audio(sources=["upload"], type="filepath", label="Upload Audio", show_label=True),
+        gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2"], value="base"),
     ],
-    gr.Dropdown(label="Choose Whisper Model", choices=["tiny", "base", "small", "medium", "large"], default="base")
     outputs="text",
     title="Whisper-based transcription app",
-    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text. Please, note that the size of the audio file should be less than 25 MB."
-)
+    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text. Please, note that the size of the audio file should be less than 25 MB.",
+    )
 
 iface.launch()
