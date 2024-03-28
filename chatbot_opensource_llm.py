@@ -22,7 +22,7 @@ llm_ollama = ChatOpenAI(
 )
 
 llm_lmstudio = ChatOpenAI(
-    openai_api_base="http://localhost:4321/v1",
+    openai_api_base="http://localhost:33331/v1",
     openai_api_key=None,                 
     model_name="GEITje 7B ultra Mistral"
 )

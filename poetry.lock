@@ -1413,9 +1413,11 @@ files = [
 ]
 
 [package.dependencies]
+aiohttp = {version = "*", optional = true, markers = "extra == \"inference\""}
 filelock = "*"
 fsspec = ">=2023.5.0"
 packaging = ">=20.9"
+pydantic = {version = ">1.1,<3.0", optional = true, markers = "python_version > \"3.8\" and extra == \"inference\""}
 pyyaml = ">=5.1"
 requests = "*"
 tqdm = ">=4.42.1"
@@ -1944,6 +1946,23 @@ postgres = ["asyncpg (>=0.29.0,<0.30.0)", "pgvector (>=0.2.4,<0.3.0)", "psycopg2
 query-tools = ["guidance (>=0.0.64,<0.0.65)", "jsonpath-ng (>=1.6.0,<2.0.0)", "lm-format-enforcer (>=0.4.3,<0.5.0)", "rank-bm25 (>=0.2.2,<0.3.0)", "scikit-learn", "spacy (>=3.7.1,<4.0.0)"]
 
 [[package]]
+name = "llama-index-embeddings-huggingface"
+version = "0.1.4"
+description = "llama-index embeddings huggingface integration"
+optional = false
+python-versions = ">=3.8.1,<4.0"
+files = [
+    {file = "llama_index_embeddings_huggingface-0.1.4-py3-none-any.whl", hash = "sha256:9c80539f3cbbd7191c219e2cda154b1a7151aa912196bc537c16f40e18e4187c"},
+    {file = "llama_index_embeddings_huggingface-0.1.4.tar.gz", hash = "sha256:042d249d91039bc4a531711c0c81ebf4f5c921de98629d2d342979bc4511a639"},
+]
+
+[package.dependencies]
+huggingface-hub = {version = ">=0.19.0", extras = ["inference"]}
+llama-index-core = ">=0.10.1,<0.11.0"
+torch = ">=2.1.2,<3.0.0"
+transformers = ">=4.37.0,<5.0.0"
+
+[[package]]
 name = "llama-index-embeddings-openai"
 version = "0.1.6"
 description = "llama-index embeddings openai integration"
@@ -2128,6 +2147,21 @@ playwright = ">=1.30,<2.0"
 requests = ">=2.31.0,<3.0.0"
 selenium = ">=4.17.2,<5.0.0"
 urllib3 = ">=1.1.0"
+
+[[package]]
+name = "llama-index-vector-stores-chroma"
+version = "0.1.6"
+description = "llama-index vector_stores chroma integration"
+optional = false
+python-versions = ">=3.8.1,<4.0"
+files = [
+    {file = "llama_index_vector_stores_chroma-0.1.6-py3-none-any.whl", hash = "sha256:506b1cb9a7a552ecb3afa70ddf479c1c683fcbfe7313654e3543e62e3ec07eae"},
+    {file = "llama_index_vector_stores_chroma-0.1.6.tar.gz", hash = "sha256:6dff3dc9d79c4039fa46cd528e5e4b6ded6473e5ef632424134491007da4ebdb"},
+]
+
+[package.dependencies]
+chromadb = ">=0.4.22,<0.5.0"
+llama-index-core = ">=0.10.1,<0.11.0"
 
 [[package]]
 name = "llama-parse"
@@ -5818,4 +5852,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "c52c616ae10a43d2384e2af77a5cf93c2c349ba72aec1a11bab9508d1d31235c"
+content-hash = "d029059534bfcfc1a1b713536c79f74f47a42420d7adbd6da7e6a10544444d20"
