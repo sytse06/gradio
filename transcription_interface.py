@@ -44,7 +44,7 @@ iface = gr.Interface(
         gr.Audio(sources=["upload"], type="filepath", label="Upload Audio", show_label=True),
         gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2"], value="base"),
     ],
-    outputs="text",
+    outputs=gr.Textbox(label="Transcription", lines=10, placeholder="Transcription will appear here...",show_copy_button=True),
     title="Whisper-based transcription app",
     description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text. Please, note that the size of the audio file should be less than 25 MB.",
     )
