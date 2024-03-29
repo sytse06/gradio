@@ -5,11 +5,11 @@ import gradio as gr
 import os
 import json
 
-with open('credentials.json', 'r', encoding='utf-8') as f:
-    credentials = json.load(f)
-os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
+#with open('credentials.json', 'r', encoding='utf-8') as f:
+#    credentials = json.load(f)
+#os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 
-llm = ChatOpenAI(temperature=1.0, model='gpt-3.5-turbo-0613')
+llm = ChatOpenAI(base_url="http://localhost:4321/v1", openai_api_key="llm-studio", temperature=0.6, streaming=True)
 
 def predict(message, history):
     history_langchain_format = []
