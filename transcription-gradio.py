@@ -1,91 +1,72 @@
-# Import necessary libraries
 import gradio as gr
-from datetime import timedelta
 import numpy as np
 import whisper
-from whisper.utils import get_writer
-from PIL import Image
-import io
-import json
+from whisper.utils import get_writer  # Ensure this points to your custom get_writer implementation
 import os
+import pydub
+from pydub import AudioSegment
 
-# Initialize the Whisper transcription API interface instance
-interface = gr.Interface(f"whisper.SpeechClient", inputs="audio", outputs="text")
+# Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
 
-# Define the models available for transcription
-models = {
-    "en-us": {
-        "params": "whisper.en-us",
-        "description": "This model is trained on a dataset of English audio recordings and can be used to transcribe speech in American English."
-    },
-    "de-de": {
-        "params": "whisper.de-de",
-        "description": "Dieser Modell ist auf einem Datensatz von deutschen Audio-Aufzeichnungen trainiert und kann für die Sprachsynthese in Deutsch verwendet werden."
-    }
-}
+def processAudio(audio1, audio2, model_choice, output_format):
+    # Load the Whisper model based on the user's selection from the dropdown
+    model = whisper.load_model(model_choice)
 
-# Define the output formats available for transcription using Gradio
-output_formats = {
-    "text/plain": {
-        "description": "This is a plain text representation of the audio file.",
-        "format": "text"
-    },
-    "application/json": {
-        "description": "This is a JSON object containing information about the transcription, including the recognized words and their timestamps.",
-        "format": "json"
-    }
-}
+    # Decide which audio file to process
+    audio_file_path = audio1 if audio1 is not None else audio2
 
-# Define the Gradio interface for handling user input
-app = gr.Interface(inputs="audio", outputs=output_formats["text/plain"], parameters=models)
+    if audio_file_path is None:
+        return None
 
-# Define a function to transcribe audio using the selected model and output format
-def transcribe(audio, model, output_format):
-    # Transcribe the entire audio and retrieve the transcribed result
-    result = interface.run_async(audio, params={"model": model})
-    
-    # Get the transcription result from the model
-    transcription = result["results"][0]["alternatives"][0]["transcript"]
-    
-    return {"transcription": transcription}
+    # Load and preprocess the audio file
+    audio = AudioSegment.from_file(audio_file_path).set_channels(1).set_frame_rate(16000)
+    result_data = {"segments": []}  # Prepare a result structure for the writer
 
-# Define a function to format timestamp information for each segment
-def format_timestamps(segments):
-    # Initialize start time as None
-    start = None
-    
-    # Initialize end time as None
-    end = None
-    
-    # Initialize duration as None
-    duration = None
-    
-    # Iterate over the segments and update the start, end, and duration if necessary
-    for segment in segments:
-        if start is None:
-            start = segment["start"]
+    # Define the chunk length in milliseconds (e.g., 5 minutes)
+    chunk_length_ms = 10 * 60 * 1000
+
+    # Process the audio in chunks
+    for i in range(0, len(audio), chunk_length_ms):
+        chunk = audio[i:i+chunk_length_ms]
+        # Export chunk to a temporary file
+        chunk_file_path = f"temp_chunk_{i}.wav"
+        chunk.export(chunk_file_path, format="wav")
         
-        if end is None:
-            end = segment["end"]
-            
-        if duration is None:
-            duration = segment["duration"]
-    
-    return {"start": start, "end": end, "duration": duration}
+        # Transcribe the chunk
+        result = model.transcribe(chunk_file_path)
+        result_data["segments"].append({"text": result["text"], "start": i, "end": i+chunk_length_ms})  # Example of how you might structure results
+        
+        # Clean up the temporary chunk file
+        os.remove(chunk_file_path)
 
-# Define a function to get the transcription result in the specified format
-def get_transcription(audio, model, output_format):
-    # Transcribe the audio using the selected model and output format
-    result = interface.run(audio, params={"model": model})
-    
-    # Get the transcription result in the specified format
-    transcription = result["results"][0]["alternatives"][0]["transcript"]
-    
-    # Format the timestamp information for each segment
-    segments = result["results"][0]["alternatives"][0]["segments"]
-    formatted_timestamps = format_timestamps(segments)
-    
-    return {"transcription": transcription, "formatted_timestamps": formatted_timestamps}
+    # Define an output directory for the results
+    output_dir = "./transcriptions"
+    os.makedirs(output_dir, exist_ok=True)
 
-# Launch the demo
-demo.launch()
+    # Get a writer based on the selected output format
+    writer = get_writer(output_format, output_dir)
+    output_file_path = writer(result_data, audio_file_path)  # Call the writer to save the result
+
+    return output_file_path  # Return the path to the generated file
+
+iface = gr.Interface(
+    fn=processAudio, 
+    inputs=[
+        gr.Audio(sources=["microphone"], type="filepath", label="Record Audio", show_label=True),
+        gr.File(
+            file_types=['.m4a', '.mp3', '.aac', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.wmv', '.mkv', '.webm'],
+            type="filepath",
+            label="Upload Audio or Video",
+            show_label=True,
+            interactive=True,
+            file_count="single"
+        ),
+        gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"], value="large"),
+        gr.Dropdown(label="Choose output format", choices=["txt", "json", "vtt", "srt", "tsv"], value="txt"),
+    ],
+    outputs=gr.File(label="Download Transcription"),
+    title="Whisper-based transcription app",
+    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text or other formats. Choose your preferred output format for the transcription."
+)
+
+iface.launch()
