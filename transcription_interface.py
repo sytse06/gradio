@@ -1,8 +1,43 @@
 import gradio as gr
 import numpy as np
 import whisper
+import os
 import pydub
 from pydub import AudioSegment
+
+def processAudio3(audio1, audio2, model_choice):
+    # Load the Whisper model based on the user's selection from the dropdown
+    model = whisper.load_model(model_choice)
+
+    # Decide which audio file to process
+    audio_file_path = audio1 if audio1 is not None else audio2
+
+    if audio_file_path is None:
+        return "No audio inputs were provided."
+
+    # Load and preprocess the audio file
+    audio = AudioSegment.from_file(audio_file_path).set_channels(1).set_frame_rate(16000)
+
+    full_transcription = ""  # Initialize the transcription result
+
+    # Define the chunk length in milliseconds (e.g., 5 minutes)
+    chunk_length_ms = 10 * 60 * 1000
+
+    # Process the audio in chunks
+    for i in range(0, len(audio), chunk_length_ms):
+        chunk = audio[i:i+chunk_length_ms]
+        # Export chunk to a temporary file
+        chunk_file_path = f"temp_chunk_{i}.wav"
+        chunk.export(chunk_file_path, format="wav")
+        
+        # Transcribe the chunk
+        result = model.transcribe(chunk_file_path)
+        full_transcription += result["text"] + " "
+        
+        # Clean up the temporary chunk file
+        os.remove(chunk_file_path)
+
+    return full_transcription
 
 def processAudio2(audio1, audio2, model_choice):
     # Load the Whisper model based on the user's selection from the dropdown
@@ -54,15 +89,23 @@ def processAudio(audio1, audio2, model_choice):
     return result["text"]
 
 iface = gr.Interface(
-    fn=processAudio2, 
+    fn=processAudio3, 
     inputs=[
         gr.Audio(sources=["microphone"], type="filepath", label="Record Audio", show_label=True),
-        gr.Audio(sources=["upload"], type="filepath", label="Upload Audio", show_label=True),
-        gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2"], value="base"),
+        #gr.Audio(sources=["upload"], type="filepath", label="Upload Audio or Video", show_label=True),
+        gr.File(
+            file_types=['.m4a', '.mp3', '.aac', '.wav', '.ogg', '.mp4', '.mov', '.avi', '.wmv', '.mkv', '.webm'],
+            type="filepath",
+            label="Upload Audio or Video",
+            show_label=True,
+            interactive=True,
+            file_count="single"  # Default is "single", explicitly stated here for clarity      
+            ),
+        gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2",  "large-v3"], value="large"),
     ],
-    outputs=gr.Textbox(label="Transcription", lines=10, placeholder="Transcription will appear here...",show_copy_button=True),
+    outputs=gr.Textbox(label="Transcription", lines=14, placeholder="Transcription will appear here...",show_copy_button=True),
     title="Whisper-based transcription app",
-    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text. Please, note that the size of the audio file should be less than 25 MB.",
+    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text.",
     )
 
 iface.launch()
