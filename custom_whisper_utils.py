@@ -94,6 +94,12 @@ class ResultWriter:
         """
         self.output_path = output_path
         self.is_temp = is_temp
+                # Determine the final output file path based on is_temp
+        if is_temp:
+            self.final_output_path = output_path
+        else:
+            # Placeholder for directory-based path logic
+            self.final_output_path = None  # This should be set appropriately
 
     def __call__(self, result: dict, audio_path: str, options: Optional[dict] = None, **kwargs):
         # Determine the output file path
@@ -295,10 +301,7 @@ class WriteJSON(ResultWriter):
     ):
         json.dump(result, file)
 
-
-def get_writer(
-    output_format: str, output_dir: str
-) -> Callable[[dict, TextIO, dict], None]:
+def get_writer(output_format: str, output_path: str, is_temp: bool = False) -> Callable:
     writers = {
         "txt": WriteTXT,
         "vtt": WriteVTT,
@@ -307,15 +310,21 @@ def get_writer(
         "json": WriteJSON,
     }
 
+    # This block seems intended for a special case where you want to use all writers at once.
+    # However, it needs to be adjusted to fit the new function signature.
     if output_format == "all":
-        all_writers = [writer(output_dir) for writer in writers.values()]
+        all_writers = [writer(output_path, is_temp) for writer in writers.values()]
 
-        def write_all(
-            result: dict, file: TextIO, options: Optional[dict] = None, **kwargs
-        ):
+        def write_all(result: dict, **kwargs):
             for writer in all_writers:
-                writer(result, file, options, **kwargs)
+                writer(result, **kwargs)
 
         return write_all
 
-    return writers[output_format](output_dir)
+    # Fetch the appropriate writer class based on the output_format
+    writer_class = writers.get(output_format)
+    if not writer_class:
+        raise ValueError(f"Unsupported output format: {output_format}")
+
+    # Initialize the writer with output_path and is_temp
+    return writer_class(output_path, is_temp)
