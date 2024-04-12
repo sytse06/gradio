@@ -32,7 +32,7 @@ def processAudio(audio1, audio2, model_choice, output_format, progress=gr.Progre
             result_data["segments"].append({"text": result["text"], "start": i, "end": i + chunk_length_ms})
         
         processed_length += len(chunk)
-        progress(processed_length / total_length, desc="Transcribing...")
+        progress(processed_length / total_length, desc="Transcription in progress...")
 
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{output_format}") as temp_output_file:
         output_file_path = temp_output_file.name
@@ -61,9 +61,9 @@ iface = gr.Interface(
     ],
     outputs=gr.File(label="Download transcription"),
     title="Whisper-based transcription app",
-    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text or other formats. Choose your preferred output format for the transcription."
+    description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text or other formats. Choose your preferred output format for the transcription.",
+    concurrency_limit=10  # Set concurrency limit at the interface level
 )
 
-# Enable queueing to allow progress updates
 if __name__ == "__main__":
-    iface.queue(concurrency_count=10).launch()
+    iface.launch(max_threads=10)  # Adjust the max_threads parameter as needed for performance optimization
