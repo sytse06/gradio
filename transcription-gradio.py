@@ -10,6 +10,18 @@ import tempfile
 
 # Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
 
+import gradio as gr
+import numpy as np
+import whisper
+#from whisper.utils import get_writer  # Ensure this points to your custom get_writer implementation
+from custom_whisper_utils import get_writer
+import os
+import pydub
+from pydub import AudioSegment
+import tempfile
+
+# Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
+
 def processAudio(audio1, audio2, model_choice, output_format):
     # Load the Whisper model based on the user's selection from the dropdown
     model = whisper.load_model(model_choice)
@@ -63,7 +75,7 @@ iface = gr.Interface(
             file_count="single"
         ),
         gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"], value="large"),
-        gr.Dropdown(label="Choose output format", choices=["txt", "json", "vtt", "srt", "tsv"], value="txt"),
+        gr.Dropdown(label="Choose output format", choices=["txt", "json", "vtt", "srt", "tsv", "all"], value="txt"),
     ],
     outputs=gr.File(label="Download transcription"),
     title="Whisper-based transcription app",
