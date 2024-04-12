@@ -1,66 +1,48 @@
 import gradio as gr
-import numpy as np
 import whisper
-#from whisper.utils import get_writer  # Ensure this points to your custom get_writer implementation
-from custom_whisper_utils import get_writer
 import os
 import pydub
 from pydub import AudioSegment
 import tempfile
 
-# Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
-
-import gradio as gr
-import numpy as np
-import whisper
-#from whisper.utils import get_writer  # Ensure this points to your custom get_writer implementation
-from custom_whisper_utils import get_writer
-import os
-import pydub
-from pydub import AudioSegment
-import tempfile
-
-# Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
-
-def processAudio(audio1, audio2, model_choice, output_format):
-    # Load the Whisper model based on the user's selection from the dropdown
+def processAudio(audio1, audio2, model_choice, output_format, progress=gr.Progress()):
+    # Load the Whisper model based on the user's selection
     model = whisper.load_model(model_choice)
 
     # Decide which audio file to process
     audio_file_path = audio1 if audio1 is not None else audio2
-
     if audio_file_path is None:
+        progress(0, desc="No file uploaded.")
         return None
 
-    # Load and preprocess the audio file
+    # Load and preprocess the audio
     audio = AudioSegment.from_file(audio_file_path).set_channels(1).set_frame_rate(16000)
-    result_data = {"segments": []}  # Prepare a result structure for the writer
+    total_length = len(audio)
+    result_data = {"segments": []}
 
-    # Define the chunk length in milliseconds (e.g., 5 minutes)
-    chunk_length_ms = 10 * 60 * 1000
+    chunk_length_ms = 10 * 60 * 1000  # 10 minutes in milliseconds
+    processed_length = 0
 
-    # Process the audio in chunks
-    for i in range(0, len(audio), chunk_length_ms):
-        chunk = audio[i:i+chunk_length_ms]
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_chunk_file:
-            chunk_file_path = temp_chunk_file.name
-            chunk.export(chunk_file_path, format="wav")
-            
-            # Transcribe the chunk
-            result = model.transcribe(chunk_file_path)
-            result_data["segments"].append({"text": result["text"], "start": i, "end": i+chunk_length_ms})  # Example of structuring results
-            
-            # No need to manually clean up the temporary chunk file; it's done automatically
+    progress(0, desc="Starting transcription...")
+    for i in range(0, total_length, chunk_length_ms):
+        chunk = audio[i:i + chunk_length_ms]
+        with tempfile.NamedTemporaryFile(suffix=".wav") as temp_chunk_file:
+            chunk.export(temp_chunk_file.name, format="wav")
+            result = model.transcribe(temp_chunk_file.name)
+            result_data["segments"].append({"text": result["text"], "start": i, "end": i + chunk_length_ms})
+        
+        processed_length += len(chunk)
+        progress(processed_length / total_length, desc="Transcribing...")
 
-    # Instead of writing to a static directory, create a temporary file for the output
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{output_format}") as temp_output_file:
         output_file_path = temp_output_file.name
 
-    # Get a writer based on the selected output format and write to the temporary file
-    writer = get_writer(output_format, temp_output_file.name, is_temp=True)
-    writer(result_data, output_file_path)  # Call the writer to save the result
-
-    return output_file_path  # Return the path to the generated file for Gradio to use
+    # Save the transcription using the appropriate writer
+    writer = get_writer(output_format)
+    writer(result_data, output_file_path)
+    
+    progress(1, desc="Transcription complete.")
+    return output_file_path
 
 iface = gr.Interface(
     fn=processAudio, 
@@ -82,4 +64,6 @@ iface = gr.Interface(
     description="Record your speech via microphone or upload an audio file and press the Submit button to transcribe it into text or other formats. Choose your preferred output format for the transcription."
 )
 
-iface.launch()
+# Enable queueing to allow progress updates
+if __name__ == "__main__":
+    iface.queue(concurrency_count=10).launch()
