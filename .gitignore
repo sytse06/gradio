@@ -1,11 +1,5 @@
 # Ignore everything
 *
 
-# But don't ignore these files
-!readme.md
-!pyproject.toml
-!poetry.lock
-!.gitignore
-!requirements.txt
-!*.py
-!.env
+flagged/log.csv
+flagged/log.csv

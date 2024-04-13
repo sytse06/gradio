@@ -79,62 +79,62 @@ def upload():
     Returns:
         str: The transcribed text in the specified format.
     """
-    audio = request.files["audio"]
-    model = request.form.get("model")
-    output_format = request.form.get("output_format")
+        audio = request.files["audio"]
+        model = request.form.get("model")
+        output_format = request.form.get("output_format")
     
         # Initialize the Whisper client with the selected parameters
-    params = get_whisper_model_params(whisper_models[model])
-    whisper_client = AudioClient(inputs="audio", outputs=output_format, params=WhisperModel(**params))
+        params = get_whisper_model_params(whisper_models[model])
+        whisper_client = AudioClient(inputs="audio", outputs=output_format, params=WhisperModel(**params))
     
-    # Load the audio file and convert it to floating-point format
-    with io.BytesIO(open(path.join("uploaded_files", "audio.wav")).read()) as audio_file:
-        audio_np = np.array(BytesIO(open(audio_file)).get_array_of_samples(), dtype=np.float32) / 32767.0
+        # Load the audio file and convert it to floating-point format
+        with io.BytesIO(open(path.join("uploaded_files", "audio.wav")).read()) as audio_file:
+            audio_np = np.array(BytesIO(open(audio_file)).get_array_of_samples(), dtype=np.float32) / 32767.0
     
-    # Transcribe the entire audio and retrieve the transcribed result
-    result = whisper_client.transcribe(audio_np, task="transcribe")
+        # Transcribe the entire audio and retrieve the transcribed result
+        result = whisper_client.transcribe(audio_np, task="transcribe")
     
-    # Specify the options
-    options = {
-        "max_line_width": 60,   # Set the max line width as needed
-        "max_line_count": 10,   # Set the max line count as needed
-        "highlight_words": True  # Set to True or False as needed
-    }
+        # Specify the options
+        options = {
+            "max_line_width": 60,   # Set the max line width as needed
+            "max_line_count": 10,   # Set the max line count as needed
+            "highlight_words": True  # Set to True or False as needed
+        }
     
-    # Extract segment information from the result
-    segments = result.segments
+        # Extract segment information from the result
+        segments = result.segments
     
-    # Format timestamp information for each segment
-    timestamps = {
-        "start": None,  # initialize start time as None
-        "end": None,  # initialize end time as None
-        "duration": None  # initialize duration as None
-    }
-    for segment in segments:
-        segment_text = segment["alternatives"][0]["transcript"].replace("\n", " ")  # remove newline characters from the text
-        if timestamps["start"] is None:
-            timestamps["start"] = int(segment["start"] / 1000)  # convert start time to seconds
-            timestamps["end"] = int(segment["start"] / 1000)  # set end time to the start time of the segment
-        elif int(segment["start"] / 1000) > int(timestamps["start"] / 1000):
-            timestamps["end"] = int(segment["start"] / 1000)  # set end time to the start time of the segment
-        else:
-            timestamps["end"] = int((segment["start"] + segment_text.index(" ")) / 1000)  # calculate end time based on the last space in the text
-        duration = int(timestamps["end"] - timestamps["start"])  # calculate duration in seconds
-        segments[segment]["timestamp"] = format_timestamp(timestamps)
+        # Format timestamp information for each segment
+        timestamps = {
+            "start": None,  # initialize start time as None
+            "end": None,  # initialize end time as None
+            "duration": None  # initialize duration as None
+        }
+        for segment in segments:
+            segment_text = segment["alternatives"][0]["transcript"].replace("\n", " ")  # remove newline characters from the text
+            if timestamps["start"] is None:
+                timestamps["start"] = int(segment["start"] / 1000)  # convert start time to seconds
+                timestamps["end"] = int(segment["start"] / 1000)  # set end time to the start time of the segment
+            elif int(segment["start"] / 1000) > int(timestamps["start"] / 1000):
+                timestamps["end"] = int(segment["start"] / 1000)  # set end time to the start time of the segment
+            else:
+                timestamps["end"] = int((segment["start"] + segment_text.index(" ")) / 1000)  # calculate end time based on the last space in the text
+            duration = int(timestamps["end"] - timestamps["start"])  # calculate duration in seconds
+            segments[segment]["timestamp"] = format_timestamp(timestamps)
     
-    # Initialize the speech recognition client
-    with gr.Interface(f"{whisper_models[model]['params']}.SpeechClient", inputs="audio", outputs=output_format) as interface:
-        with io.BytesIO() as audio_file:
-            audio.save(audio_file, format="wav")
-            audio_file.seek(0)
+        # Initialize the speech recognition client
+        with gr.Interface(f"{whisper_models[model]['params']}.SpeechClient", inputs="audio", outputs=output_format) as interface:
+            with io.BytesIO() as audio_file:
+                audio.save(audio_file, format="wav")
+                audio_file.seek(0)
+                
+                # Transcribe the audio file
+                result = interface.run_async(audio_file)
+                
+                # Get the transcription result from the model
+                transcription = result.get()["results"][0]["alternatives"][0]["transcript"]
             
-            # Transcribe the audio file
-            result = interface.run_async(audio_file)
-            
-            # Get the transcription result from the model
-            transcription = result.get()["results"][0]["alternatives"][0]["transcript"]
-            
-    return render_template("result.html", transcription=transcription, output_format=output_format)
+        return render_template("result.html", transcription=transcription, output_format=output_format)
 
 if __name__ == "__main__":
     app.run(port=5000, debug=True)
