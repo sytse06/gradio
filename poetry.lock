@@ -4858,6 +4858,20 @@ files = [
 mpmath = ">=0.19"
 
 [[package]]
+name = "tdqm"
+version = "0.0.1"
+description = "Alias for typos of tqdm"
+optional = false
+python-versions = "*"
+files = [
+    {file = "tdqm-0.0.1-py2-none-any.whl", hash = "sha256:85680e5b7d78470cd80f87f348180f3fc924afe799f472e0f2e71bc82927e0c1"},
+    {file = "tdqm-0.0.1.tar.gz", hash = "sha256:f050004a76b1d22f70b78209b48781353c82440215b6ba7d22b1f499b05a0101"},
+]
+
+[package.dependencies]
+tqdm = "*"
+
+[[package]]
 name = "tenacity"
 version = "8.2.3"
 description = "Retry code until it succeeds"
@@ -5851,4 +5865,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "20dd268a65da185a3b25392681d76006e1f6e02a7dc63d6609d69ea47e9f97fb"
+content-hash = "6338042de380794717cfd3b6c30add7cc32a4df0821d009c0f7d501c7701f128"

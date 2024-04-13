@@ -10,7 +10,9 @@ import tempfile
 
 # Ensure the ResultWriter subclasses (WriteTXT, WriteVTT, etc.) are correctly defined here
 
-def processAudio(audio1, audio2, model_choice, output_format):
+def processAudio(audio1, audio2, model_choice, output_format, progress=gr.Progress(track_tqdm=True)):
+    progress(0, desc="Initializing transcription...")
+
     # Load the Whisper model based on the user's selection from the dropdown
     model = whisper.load_model(model_choice)
 
@@ -27,9 +29,11 @@ def processAudio(audio1, audio2, model_choice, output_format):
 
     chunk_length_ms = 10 * 60 * 1000  # 10 minutes in milliseconds
     processed_length = 0
+    
+    progress(0.05, desc="Starting transcription...")
+    segments = range(0, total_length, chunk_length_ms)  # Define the range for tqdm
 
-    progress(0, desc="Starting transcription...")
-    for i in range(0, total_length, chunk_length_ms):
+    for i in progress.tqdm(segments, desc="Transcribing"):
         chunk = audio[i:i + chunk_length_ms]
         with tempfile.NamedTemporaryFile(suffix=".wav") as temp_chunk_file:
             chunk.export(temp_chunk_file.name, format="wav")
@@ -37,16 +41,15 @@ def processAudio(audio1, audio2, model_choice, output_format):
             result_data["segments"].append({"text": result["text"], "start": i, "end": i + chunk_length_ms})
         
         processed_length += len(chunk)
-        progress(processed_length / total_length, desc="Transcription in progress...")
 
+    progress(1, desc="Transcription complete. Processing file...")
     with tempfile.NamedTemporaryFile(delete=False, suffix=f".{output_format}") as temp_output_file:
         output_file_path = temp_output_file.name
 
     # Save the transcription using the appropriate writer
-    writer = get_writer(output_format)
-    writer(result_data, output_file_path)
+    writer = get_writer(output_format, output_file_path, is_temp=True)
+    writer(result_data, audio_file_path)  # Pass the result and original audio path
     
-    progress(1, desc="Transcription complete.")
     return output_file_path
 
 iface = gr.Interface(
@@ -61,8 +64,8 @@ iface = gr.Interface(
             interactive=True,
             file_count="single"
         ),
-        gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"], value="large"),
-        gr.Dropdown(label="Choose output format", choices=["txt", "json", "vtt", "srt", "tsv"], value="txt"),
+            gr.Dropdown(label="Choose Whisper model", choices=["tiny", "base", "small", "medium", "large", "large-v2", "large-v3"], value="large"),
+            gr.Dropdown(label="Choose output format", choices=["txt", "json", "vtt", "srt", "tsv", "all"], value="txt"),
     ],
     outputs=gr.File(label="Download transcription"),
     title="Whisper-based transcription app",
