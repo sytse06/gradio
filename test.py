@@ -1,12 +1,24 @@
 import gradio as gr
 
-def greet(name, intensity):
-    return "Hello, " + name + "!" * int(intensity)
+from transformers import pipeline
 
-demo = gr.Interface(
-    fn=greet,
-    inputs=["text", "slider"],
-    outputs=["text"],
-)
+pipe = pipeline("translation", model="t5-base")
+
+
+def translate(text):
+    return pipe(text)[0]["translation_text"]
+
+
+with gr.Blocks() as demo:
+    with gr.Row():
+        with gr.Column():
+            english = gr.Textbox(label="English text")
+            translate_btn = gr.Button(value="Translate")
+        with gr.Column():
+            dutch = gr.Textbox(label="Dutch Text")
+
+    translate_btn.click(translate, inputs=english, outputs=dutch, api_name="translate-to-dutch")
+    examples = gr.Examples(examples=["I went to the supermarket yesterday.", "Helen is a good swimmer."],
+                           inputs=[english])
 
 demo.launch()
