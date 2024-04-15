@@ -24,8 +24,10 @@ llm = ChatOpenAI(temperature=0, model="gpt-3.5-turbo-0613")
 
 # Async scraping function adapted for Gradio
 async def async_scrape_and_save(urls, schema, output_dir="downloads"):
+    if not urls:  # Check if URLs are empty or None
+        return "No URLs provided"
     os.makedirs(output_dir, exist_ok=True)
-    urls = [url for url in urls.split('\n') if url]
+    urls = [url.strip() for url in urls.split('\n') if url.strip()]
     loader = AsyncChromiumLoader(urls)
     bs_transformer = BeautifulSoupTransformer()
     html_contents = await loader.load()
@@ -43,26 +45,26 @@ async def async_scrape_and_save(urls, schema, output_dir="downloads"):
         except Exception as e:
             logger.error(f"Error processing {doc.url}: {str(e)}")
 
-# Gradio interface function that integrates with the async scraping
-async def scrape_and_display_results(urls):
-    schema = {
-        "properties": {
-            "news_article_title": {"type": "string"},
-            "news_article_summary": {"type": "string"},
-        },
-        "required": ["news_article_title", "news_article_summary"],
-    }
-    # Directly await the asynchronous function
-    await async_scrape_and_save(urls, schema)
-    return f"Processed URLs. Check the 'downloads' folder for results."
+# Using gr.Blocks for a more flexible UI arrangement
+with gr.Blocks() as app:
+    with gr.Row():
+        url_input = gr.Textbox(label="Enter URLs (one per line)", placeholder="Type here...", lines=4)
+        submit_button = gr.Button("Scrape", elem_id="scrape_button")
+    output_area = gr.Textbox(label="Processing Results")
 
-# Set up the Gradio interface
-iface = gr.Interface(fn=scrape_and_display_results,
-                     inputs=gr.Textbox(label="Enter URLs (one per line)"),
-                     outputs=gr.Textbox(label="Processing Results"),
-                     title="LLM-based web scrape tool",
-                     description="Enter the URLs you want to scrape in the textbox below, one URL per line. The results will be saved in the 'downloads' folder.")
+    def wrap_async_scrape(urls):
+        schema = {
+            "properties": {
+                "news_article_title": {"type": "string"},
+                "news_article_summary": {"type": "string"},
+            },
+            "required": ["news_article_title", "news_article_summary"],
+        }
+        return asyncio.run(async_scrape_and_save(urls, schema))
+
+    # Ensure urls is not None by providing a default empty string if it is None
+    submit_button.click(fn=lambda: wrap_async_scrape(url_input.value or ""), inputs=[urls], outputs=[output_area])
 
 # Launch the Gradio app
 if __name__ == "__main__":
-    iface.launch()
+    app.launch()
