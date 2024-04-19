@@ -1,5 +1,6 @@
-
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.readers.file import FlatReader
+from llama_index.core.node_parser import SimpleFileNodeParser
 from llama_index.llms.openai import OpenAI
 from llama_index.core import Settings, Document, PromptTemplate
 from llama_index.vector_stores.chroma import ChromaVectorStore
@@ -12,6 +13,7 @@ import gradio as gr
 import re
 import os
 import json
+from pathlib import Path
 
 with open('credentials.json', 'r', encoding='utf-8') as f:
     credentials = json.load(f)
@@ -80,8 +82,9 @@ iface = gr.Interface(
             label="Upload text files",
             show_label=True,
             interactive=True,
-            file_count="multiple"
-            )
+            file_count="multiple",
+            ),
+        gr.Textbox(label="Enter your question", visible=True, placeholder="Ask a question..."),
         ], 
     outputs="text"
 )
