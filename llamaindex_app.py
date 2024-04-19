@@ -19,75 +19,32 @@ with open('credentials.json', 'r', encoding='utf-8') as f:
     credentials = json.load(f)
 os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 
-# Function to handle the upload and processing of files, including metadata
-def handle_upload(file_paths):
-    documents = []
-    for file_path in file_paths:
-        # Use FlatReader to load the document
-        doc = FlatReader().load_data(Path(file_path))
-        documents.extend(doc)  # Append all loaded documents
-    
-    # Parse documents into nodes using SimpleFileNodeParser
-    parser = SimpleFileNodeParser(include_metadata=True)
-    all_nodes = []
-    for document in documents:
-        nodes = parser.get_nodes_from_documents([document])
-        all_nodes.extend(nodes)
-    return f"Processed {len(all_nodes)} nodes from uploaded files."
+def handle_upload(file):
 
-# Function to process and index documents
-def index_documents(documents):
-    text_splitter = SentenceSplitter(chunk_size=200, chunk_overlap=10, include_metadata=True)
-    
-    # Gather all nodes from the documents
-    nodes = text_splitter.get_nodes_from_documents(documents=documents)
-    
-    # Detail about chunks and nodes
-    number_of_chunks = len(nodes)  # Total number of chunks created from all documents
-    
-    chroma_client = chromadb.EphemeralClient()
-    chroma_collection = chroma_client.create_collection("test_collection2")
-    vector_store = ChromaVectorStore(chroma_collection=chroma_collection)
-    storage_context = StorageContext.from_defaults(vector_store=vector_store)
-    index = VectorStoreIndex(nodes=nodes, storage_context=storage_context, embed_model=OpenAIEmbedding())
-    retriever = index.as_retriever()
-    
-    # Return a message with detailed information
-    return f"Files indexed successfully with metadata. Number of nodes (chunks) created: {number_of_chunks}."
+    return open(file, 'r').read()   # assuming the returned value is content of uploaded files
 
-llm = OpenAI(model="gpt-3.5-turbo")
-
-new_summary_tmpl_str = (
-    "You always say 'Hello my friend' at the beginning of your answer. Below you find data from a database\n"
-    "{context_str}\n"
-    "Take that context and try to answer the question with it."
-    "Query: {query_str}\n"
-    "Answer: "
-)
-new_summary_tmpl = PromptTemplate(new_summary_tmpl_str)
-
-#retriever.update_prompts({"response_synthesizer:text_qa_template": new_summary_tmpl})
-
-#prompts_dict = query_engine.get_prompts()
-#print(prompts_dict)
-#query_engine.query("How long does it take to prepare a pizza")
+def ask_question(text):  
+    if text != "": # Check if a question has been asked
+         # Your implementation for asking the question using LLM and Llamaindex...
+         return "Your Answer"
+    else: 
+        return "" # Return an empty string to hide Textbox in UI.
 
 # Create Gradio interface
-iface = gr.Interface(
-    fn=handle_upload, 
-    inputs=[
-        gr.File(
-            file_types=['txt', 'md', 'json'],
-            type="filepath",
-            label="Upload text files",
-            show_label=True,
-            interactive=True,
-            file_count="multiple",
-            ),
-        gr.Textbox(label="Enter your question", visible=True, placeholder="Ask a question..."),
-        ], 
-    outputs="text"
-)
-
+with gr.TabbedInterface(['Upload Document', 'Ask Question']) as ui:
+    with ui.tabItem("Upload Document"):
+        file = gr.File(file_types=['.txt'], label='Choose a text file to upload')
+        btn_upload = gr.Button('Submit').style(margin=False)
+        
+    with ui.tabItem("Ask Question"):
+        question_box = gr.Textbox(placeholder="Enter your question here", label='Question')
+        answer_box = gr.Textbox(placeholder="Your answers will appear here...", label='Answer', disabled=True)
+        btn_ask = gr.Button('Ask').style(margin=False)
+        
+    # Define event handlers
+    btn_upload.click(handle_upload, [file], iface2)  
+    ui.close(iface1).then(btn_ask, answer_box, lambda x: f"You asked: {x}", show=True)   
+    btn_ask.click(lambda x: f"You asked: {x}", question_box, answer_box)  # Define event handlers
+    
 if __name__ == "__main__":
-    iface.launch()
+    ui.launch()
