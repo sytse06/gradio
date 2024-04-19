@@ -14,37 +14,43 @@ import re
 import os
 import json
 from pathlib import Path
+import textwrap
 
 with open('credentials.json', 'r', encoding='utf-8') as f:
     credentials = json.load(f)
 os.environ['OPENAI_API_KEY'] = credentials['openai_api_key']
 
 def handle_upload(file):
+    with open(file, 'r') as f:   # Read the content directly from the file-like object
+        content = f.read()
+        
+    wrapped_text = textwrap.fill(content, width=80)  # Wrap your text to fit into a specified width. By default, it wraps at 70 characters.
+    
+    return wrapped_text
 
-    return open(file, 'r').read()   # assuming the returned value is content of uploaded files
-
-def ask_question(text):  
+def ask_question(question, file_content):  
     if text != "": # Check if a question has been asked
          # Your implementation for asking the question using LLM and Llamaindex...
          return "Your Answer"
     else: 
         return "" # Return an empty string to hide Textbox in UI.
 
-# Create Gradio interface
-with gr.TabbedInterface(['Upload Document', 'Ask Question']) as ui:
-    with ui.tabItem("Upload Document"):
-        file = gr.File(file_types=['.txt'], label='Choose a text file to upload')
-        btn_upload = gr.Button('Submit').style(margin=False)
+# Gradio Interface in two tabs one for upload the other for asking questions
+with gr.Blocks() as app:
+    file_content_display = gr.Textbox(value='', label="Content of the file", visible=True, interactive=False)
+
+    with gr.TabItem(label="Upload Document"):
+        file = gr.File(file_types=['.txt', '.md'], label='Choose a file to upload')
+        btn_upload = gr.Button('Submit')
+        btn_upload.click(handle_upload, inputs=file, outputs=file_content_display)
         
-    with ui.tabItem("Ask Question"):
+    with gr.TabItem(label="Ask Question"):
         question_box = gr.Textbox(placeholder="Enter your question here", label='Question')
-        answer_box = gr.Textbox(placeholder="Your answers will appear here...", label='Answer', disabled=True)
-        btn_ask = gr.Button('Ask').style(margin=False)
-        
-    # Define event handlers
-    btn_upload.click(handle_upload, [file], iface2)  
-    ui.close(iface1).then(btn_ask, answer_box, lambda x: f"You asked: {x}", show=True)   
-    btn_ask.click(lambda x: f"You asked: {x}", question_box, answer_box)  # Define event handlers
-    
+        answer_box = gr.Textbox(placeholder="Your answers will appear here...", label='Answer', interactive=False)
+        btn_ask = gr.Button('Ask')
+        # Pass both the question and the content of the file to the function
+        btn_ask.click(ask_question, inputs=[question_box, file_content_display], outputs=answer_box)
+
+# Launch the application
 if __name__ == "__main__":
-    ui.launch()
+    app.launch()
